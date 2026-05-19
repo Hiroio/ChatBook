@@ -14,6 +14,7 @@ class UserManager {
   
   private init(){}
   
+  let userDefault = UserDefaultsManager.shared
   
   
   private let userCollection: CollectionReference = Firestore.firestore().collection("Users")
@@ -23,13 +24,18 @@ class UserManager {
   }
   
   func createNewUser(user: UserModel) async throws{
-      let userFS = FSUser(user: user)
+      var userFS = FSUser(user: user)
+	 
+	 if !userDefault.fcmToken.isEmpty{
+		userFS.fcmtoken = userDefault.fcmToken
+	 }
     
       try userDocument(userId: user.id).setData(from: userFS, merge: false, encoder: Firestore.Encoder())
   }
   
   func getUsersBySearch(text: String) async -> [FSUser]{
     let queryEnd = text + "\u{f8ff}"
+	 print(queryEnd)
     
     guard let users = try? await userCollection
       .whereField("nickname", isGreaterThanOrEqualTo: text)
@@ -37,6 +43,7 @@ class UserManager {
       .getDocumentsCustom() as [FSUser] else {
       return []
     }
+	 print(users)
     return users
   }
   
@@ -45,6 +52,11 @@ class UserManager {
     return try? await userDocument(userId: id).getDocument(as: UserModel.self)
   }
   
+  
+  func setFCMToken(token: String) async {
+	 guard let id = AuthenticationManager.shared.user?.id else {return}
+	 try? await userDocument(userId: id).setData(["fcmToken": token], merge: true)
+  }
   
 }
 
@@ -75,7 +87,6 @@ extension UserManager{
           batch.updateData(["userPreviews": previews], forDocument: doc.reference)
       }
       
-      // 4. Записуємо все одним махом
       try? await batch.commit()
     return true
   }

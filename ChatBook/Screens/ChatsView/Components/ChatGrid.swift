@@ -15,11 +15,11 @@ struct ChatGrid: View {
       VStack(spacing: 15){
         ForEach(chats){chat in
           let opponentPreview = chat.userPreviews.first(where: {$0.id != (userId)})
-          NavigationLink{
-            ChatView(id: chat.id)
-          }label:{
-            UserChat(opponentPreview: opponentPreview, chat: chat)
-          }
+			 Button{
+				NavigationManager.shared.chatId = chat.id
+			 }label: {
+				UserChat(opponentPreview: opponentPreview, chat: chat)
+			 }
         }
       }
     }

@@ -17,7 +17,7 @@ class UserViewModel: ObservableObject{
   @Published var selectedImage: UIImage? = nil
   
   private let userManager = UserManager.shared
-  private let storageManager = StorageManager.shared
+//  private let storageManager = StorageManager.shared  (No subscription)
   
   init() {
     getUser()
@@ -50,8 +50,8 @@ class UserViewModel: ObservableObject{
     
     do {
       if let data = try await item.loadTransferable(type: Data.self), let id = AuthenticationManager.shared.user?.id{
-        let photoURL = try? await storageManager.uploadProfileImage(imageData: data, userId: id)
-        userPhotoURL = photoURL ?? ""
+//        let photoURL = try? await storageManager.uploadProfileImage(imageData: data, userId: id)
+//        userPhotoURL = photoURL ?? ""
         self.saveChanges()
       }
     }catch{

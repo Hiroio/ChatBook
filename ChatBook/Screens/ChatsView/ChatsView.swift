@@ -25,16 +25,18 @@ struct ChatsView: View {
             UserSettings(isPresent: $isPresent)
               .zIndex(2)
           }
+			 .zIndex(2)
           VStack{
             SearchView()
-              .zIndex(2)
+              .zIndex(1)
             
             //          MARK: User Chats
             ChatGrid(chats: vm.userChats)
               .zIndex(-1)
           }
-          .padding()
+			 .zIndex(1)
         }
+		  .padding()
         .frame(maxWidth: .infinity)
         
         if isPresent{

@@ -16,8 +16,7 @@ struct ChatView: View {
   @State private var chatText: String = ""
     var body: some View {
       ZStack{
-        RadialGradient.background
-          .ignoresSafeArea()
+		  Color.white.ignoresSafeArea()
         VStack{
           Spacer()
           

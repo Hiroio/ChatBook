@@ -13,7 +13,7 @@ struct RootView: View {
       if authManager.user == nil{
         AuthorizationView()
       }else{
-        ChatsView()
+        MainView()
       }
     }
 }

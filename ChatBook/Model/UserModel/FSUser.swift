@@ -10,11 +10,12 @@ import Foundation
 
 struct FSUser: Codable, Identifiable {
   let id: String
-  let nickname: String
+  var nickname: String
   let email: String
   let isAnnonymous: Bool
+  var fcmtoken: String
   let photoURL: String
-  let isOnline: Bool
+  var isOnline: Bool
   let dateCreated: Date
 }
 
@@ -25,6 +26,7 @@ extension FSUser{
     self.email = user.email ?? ""
     self.isAnnonymous = user.isAnnonymous
     self.isOnline = user.isOnline
+	 self.fcmtoken = ""
     self.photoURL = ""
     self.dateCreated = Date()
   }

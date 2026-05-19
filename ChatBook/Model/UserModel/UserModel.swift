@@ -13,8 +13,10 @@ struct UserModel: Codable{
   let nickname: String
   let email: String?
   let photoURL: String?
+  let fcmtoken: String
   let isAnnonymous: Bool
   let isOnline: Bool
+  let dateCreated: Date
 }
 
 
@@ -25,7 +27,9 @@ extension UserModel{
     self.email = user.email
     self.photoURL = user.photoURL?.absoluteString
     self.isAnnonymous = user.isAnonymous
+	 self.fcmtoken = ""
     self.isOnline = false
+	 self.dateCreated = Date()
   }
 }
 
