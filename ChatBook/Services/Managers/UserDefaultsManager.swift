@@ -23,4 +23,13 @@ class UserDefaultsManager{
 		userDefault.setValue(newValue, forKey: "fcmToken")
 	 }
   }
+  
+  var voIpToken: String {
+	 get{
+		userDefault.value(forKey: "voIPToken") as? String ?? ""
+	 }
+	 set{
+		userDefault.setValue(newValue, forKey: "voIPToken")
+	 }
+  }
 }

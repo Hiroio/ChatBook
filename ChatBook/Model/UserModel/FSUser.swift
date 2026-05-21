@@ -13,7 +13,8 @@ struct FSUser: Codable, Identifiable {
   var nickname: String
   let email: String
   let isAnnonymous: Bool
-  var fcmtoken: String
+  var fcmToken: String
+  var voipToken: String
   let photoURL: String
   var isOnline: Bool
   let dateCreated: Date
@@ -26,7 +27,8 @@ extension FSUser{
     self.email = user.email ?? ""
     self.isAnnonymous = user.isAnnonymous
     self.isOnline = user.isOnline
-	 self.fcmtoken = ""
+	 self.fcmToken = user.fcmToken
+	 self.voipToken = user.voipToken
     self.photoURL = ""
     self.dateCreated = Date()
   }

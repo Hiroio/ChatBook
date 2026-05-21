@@ -32,7 +32,7 @@ struct MainView: View {
 		  if let chatId = navigation.chatId{
 			 ChatView(id: chatId)
 				.zIndex(1)
-				.transition(.slide)
+				.transition(.move(edge: .trailing))
 				.allowsHitTesting(navigation.chatId != nil)
 		  }
 		}

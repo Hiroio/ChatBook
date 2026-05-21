@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		CE122A502FBDF57100A2E553 /* Secrets.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = CE122A4F2FBDF57100A2E553 /* Secrets.xcconfig */; };
+		CE122A602FBE43DD00A2E553 /* RtcBasic in Frameworks */ = {isa = PBXBuildFile; productRef = CE122A5F2FBE43DD00A2E553 /* RtcBasic */; };
+		CE122BC72FBF8D9B00A2E553 /* FirebaseFunctions in Frameworks */ = {isa = PBXBuildFile; productRef = CE122BC62FBF8D9B00A2E553 /* FirebaseFunctions */; };
 		CE52A3272F5D80B000DF0057 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = CE52A3262F5D80B000DF0057 /* FirebaseAuth */; };
 		CE52A3292F5D80B000DF0057 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = CE52A3282F5D80B000DF0057 /* FirebaseCore */; };
 		CE52A32D2F5D80B000DF0057 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = CE52A32C2F5D80B000DF0057 /* FirebaseFirestore */; };
@@ -16,6 +19,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		CE122A4F2FBDF57100A2E553 /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
 		CEE2E12A2F5C6E2E00F8651A /* ChatBook.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ChatBook.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -48,6 +52,8 @@
 				CE52A32D2F5D80B000DF0057 /* FirebaseFirestore in Frameworks */,
 				CE52A3332F5D80B000DF0057 /* FirebaseMessaging in Frameworks */,
 				CE52A3292F5D80B000DF0057 /* FirebaseCore in Frameworks */,
+				CE122BC72FBF8D9B00A2E553 /* FirebaseFunctions in Frameworks */,
+				CE122A602FBE43DD00A2E553 /* RtcBasic in Frameworks */,
 				CE52A3272F5D80B000DF0057 /* FirebaseAuth in Frameworks */,
 				CE52A3312F5D80B000DF0057 /* FirebaseInAppMessaging-Beta in Frameworks */,
 				CE52A3352F5D80B000DF0057 /* FirebaseRemoteConfig in Frameworks */,
@@ -57,10 +63,19 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		CE122BC52FBF8D9B00A2E553 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		CEE2E1212F5C6E2E00F8651A = {
 			isa = PBXGroup;
 			children = (
+				CE122A4F2FBDF57100A2E553 /* Secrets.xcconfig */,
 				CEE2E12C2F5C6E2E00F8651A /* ChatBook */,
+				CE122BC52FBF8D9B00A2E553 /* Frameworks */,
 				CEE2E12B2F5C6E2E00F8651A /* Products */,
 			);
 			sourceTree = "<group>";
@@ -99,6 +114,8 @@
 				CE52A3302F5D80B000DF0057 /* FirebaseInAppMessaging-Beta */,
 				CE52A3322F5D80B000DF0057 /* FirebaseMessaging */,
 				CE52A3342F5D80B000DF0057 /* FirebaseRemoteConfig */,
+				CE122A5F2FBE43DD00A2E553 /* RtcBasic */,
+				CE122BC62FBF8D9B00A2E553 /* FirebaseFunctions */,
 			);
 			productName = ChatBook;
 			productReference = CEE2E12A2F5C6E2E00F8651A /* ChatBook.app */;
@@ -130,6 +147,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				CE52A3252F5D80B000DF0057 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				CE122A5E2FBE43DD00A2E553 /* XCRemoteSwiftPackageReference "AgoraRtcEngine_iOS" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = CEE2E12B2F5C6E2E00F8651A /* Products */;
@@ -146,6 +164,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CE122A502FBDF57100A2E553 /* Secrets.xcconfig in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -295,8 +314,9 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ChatBook/Info.plist;
-				INFOPLIST_KEY_NSCameraUsageDescription = "";
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Please provide camera access for your video calls";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Please provide microphone access for your calls";
+				INFOPLIST_KEY_NSVoIPUsageDescription = "Enable Calling to you";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -332,8 +352,9 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ChatBook/Info.plist;
-				INFOPLIST_KEY_NSCameraUsageDescription = "";
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Please provide camera access for your video calls";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Please provide microphone access for your calls";
+				INFOPLIST_KEY_NSVoIPUsageDescription = "Enable Calling to you";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -381,6 +402,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		CE122A5E2FBE43DD00A2E553 /* XCRemoteSwiftPackageReference "AgoraRtcEngine_iOS" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/AgoraIO/AgoraRtcEngine_iOS.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 4.6.2;
+			};
+		};
 		CE52A3252F5D80B000DF0057 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
@@ -392,6 +421,16 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		CE122A5F2FBE43DD00A2E553 /* RtcBasic */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = CE122A5E2FBE43DD00A2E553 /* XCRemoteSwiftPackageReference "AgoraRtcEngine_iOS" */;
+			productName = RtcBasic;
+		};
+		CE122BC62FBF8D9B00A2E553 /* FirebaseFunctions */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = CE52A3252F5D80B000DF0057 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFunctions;
+		};
 		CE52A3262F5D80B000DF0057 /* FirebaseAuth */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = CE52A3252F5D80B000DF0057 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;

@@ -16,6 +16,9 @@ struct AuthorizationView: View {
       ZStack{
         RadialGradient.background.ignoresSafeArea()
         VStack{
+			 Spacer()
+			 Text("Chat Book")
+				.font(.title.weight(.medium))
           Spacer()
           Button{
             Task{
@@ -47,29 +50,7 @@ struct AuthorizationView: View {
                 .shadow(radius: 5)
             )
           }
-          
-          
-          Spacer()
-          Button{
-            try? AuthenticationManager.shared.signOut()}label:{
-            Text("Sign out")
-              .foregroundStyle(.white)
-              .background(
-                RoundedRectangle(cornerRadius: 20)
-                  .fill(.red)
-                
-              )
-          }
-          Spacer()
-          Circle()
-            .fill(.blue.opacity(0.5))
-            .frame(height: 55)
-            .offset(y: isPresented ? 0 : 110)
-            .shadow(color: .blue,radius: 5)
-            .onAppear(){
-              isPresented.toggle()
-            }
-            .animation(.easeInOut(duration: 1.5).repeatForever(), value: isPresented)
+         
         }
         .foregroundStyle(.primary)
         .font(.headline)
@@ -84,3 +65,8 @@ struct AuthorizationView: View {
 #Preview {
     AuthorizationView()
 }
+
+//
+//Task{
+//  try await AuthenticationManager.shared.signInAnonymously()
+//}

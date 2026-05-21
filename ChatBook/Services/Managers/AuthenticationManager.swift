@@ -34,8 +34,10 @@ class AuthenticationManager: ObservableObject{
   
   func signOut() throws{
     try Auth.auth().signOut()
+	 
     user = nil
   }
+  
 }
 
 

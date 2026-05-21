@@ -192,4 +192,28 @@ extension ChatManager{
         })
         .eraseToAnyPublisher()
 }
+  
+//  Single User
+  func listenUser(userId: String) -> AnyPublisher<UserModel, Error> {
+	 let subject = PassthroughSubject<UserModel, Error>()
+	 
+	 let query = Firestore.firestore().collection("Users")
+		.document(userId)
+
+	 let listener = query.addSnapshotListener { snapshot, error in
+		  if let error = error {
+				subject.send(completion: .failure(error))
+				return
+		  }
+		  
+		if let user = try? snapshot?.data(as: UserModel.self){
+		  subject.send(user)
+		}
+	 }
+	 return subject
+		  .handleEvents(receiveCancel: {
+				listener.remove()
+		  })
+		  .eraseToAnyPublisher()
+}
 }

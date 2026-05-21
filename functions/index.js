@@ -1,111 +1,211 @@
-/**
- * Import function triggers from their respective submodules:
- *
- * const {onCall} = require("firebase-functions/v2/https");
- * const {onDocumentWritten} = require("firebase-functions/v2/firestore");
- *
- * See a full list of supported triggers at https://firebase.google.com/docs/functions
- */
-
-const {setGlobalOptions} = require("firebase-functions");
-const {onRequest} = require("firebase-functions/https");
+const { setGlobalOptions } = require("firebase-functions/v2");
+const { onRequest, onCall, HttpsError } = require("firebase-functions/v2/https");
+const { onDocumentCreated } = require("firebase-functions/v2/firestore");
 const logger = require("firebase-functions/logger");
+const admin = require("firebase-admin");
+const apn = require("apn");
+const path = require("path"); // Перенесено вгору
 
-// For cost control, you can set the maximum number of containers that can be
-// running at the same time. This helps mitigate the impact of unexpected
-// traffic spikes by instead downgrading performance. This limit is a
-// per-function limit. You can override the limit for each function using the
-// `maxInstances` option in the function's options, e.g.
-// `onRequest({ maxInstances: 5 }, (req, res) => { ... })`.
-// NOTE: setGlobalOptions does not apply to functions using the v1 API. V1
-// functions should each use functions.runWith({ maxInstances: 10 }) instead.
-// In the v1 API, each function can only serve one request per container, so
-// this will be the maximum concurrent request count.
+// Налаштування лімітів інстансів
 setGlobalOptions({ maxInstances: 10 });
 
-const { onDocumentCreated } = require("firebase-functions/v2/firestore");
-const admin = require("firebase-admin");
-
-// Ініціалізація сервера
+// Ініціалізація Firebase Admin SDK
 admin.initializeApp();
 
-// Функція тригериться, коли в підколекцію messages будь-якого чату додається новий документ
+// Підключаємо Agora генератор токенів
+const { RtcTokenBuilder, RtcRole } = require("agora-token");
+const agoraKeys = require("./stream-keys.json");
+
+// Ініціалізація APNs провайдера для надсилання VoIP-пушів
+const apnProvider = new apn.Provider({
+  token: {
+	 key: path.join(__dirname, "AuthKey_MG47F4PMJ2.p8"),
+	 keyId: "MG47F4PMJ2",
+	 teamId: "WU276H25JQ"
+  },
+  production: false
+});
+
+// -------------------------------------------------------------------------
+// NEW FUNCTION: Generates a secure JWT token for Agora RTC
+// -------------------------------------------------------------------------
+exports.getAgoraToken = onRequest({ region: "europe-central2" }, async (req, res) => {
+  try {
+	 const channelName = req.query.channelName;
+	 const uid = req.query.uid ? Number(req.query.uid) : 0;
+	 
+	 if (!channelName) {
+		res.status(400).send("Missing channelName parameter.");
+		return;
+	 }
+	 
+	 const appId = agoraKeys.agoraAppId;
+	 const appCertificate = agoraKeys.agoraAppCertificate;
+	 
+	 const role = RtcRole.PUBLISHER;
+	 
+	 const tokenExpirationInSecond = 3600;
+	 const privilegeExpirationInSecond = 3600;
+	 
+	 const token = RtcTokenBuilder.buildTokenWithUid(
+																	 appId,
+																	 appCertificate,
+																	 channelName,
+																	 uid,
+																	 role,
+																	 tokenExpirationInSecond,
+																	 privilegeExpirationInSecond
+																	 );
+	 
+	 res.status(200).json({ token: token });
+	 
+  } catch (error) {
+	 console.error("Error generating Agora token:", error);
+	 res.status(500).send("Internal Server Error");
+  }
+});
+
+// -------------------------------------------------------------------------
+// NOTIFICATION FUNCTION: Sends push notifications when a new message arrives
+// -------------------------------------------------------------------------
 exports.sendChatNotification = onDocumentCreated("chats/{chatId}/messages/{messageId}", async (event) => {
-	 const messageData = event.data.data();
-	 if (!messageData) {
-		  console.log("Дані нового повідомлення пусті.");
-		  return;
+  const messageData = event.data.data();
+  if (!messageData) {
+	 console.log("New message data is empty.");
+	 return;
+  }
+  
+  const text = messageData.text || "Message";
+  let senderName = messageData.senderName || "New Message";
+  const senderId = messageData.senderId;
+  const chatId = event.params.chatId;
+  
+  try {
+	 // 1. Fetch the chat document to get user previews
+	 const chatDoc = await admin.firestore().collection("chats").doc(chatId).get();
+	 
+	 if (!chatDoc.exists) {
+		console.log(`Chat with ID ${chatId} not found.`);
+		return;
 	 }
-
-	 // Припускаємо, що у вашому документі повідомлення є ці поля:
-	 const text = messageData.text || "Message";
-	 const senderName = messageData.senderName || "New Message";
-	 const senderId = messageData.senderId;
-	 const chatId = event.params.chatId;
-
-	 try {
-		  // 1. Оскільки пуш треба надіслати ОТРИМУВАЧУ, а не тому, хто написав,
-		  // ми дістаємо головний документ чату, щоб подивитися, які юзери там є в "userPreviews"
-		  const chatDoc = await admin.firestore().collection("chats").doc(chatId).get();
-		  
-		  if (!chatDoc.exists) {
-				console.log(`Чат ${chatId} не знайдено.`);
-				return;
-		  }
-
-		  const chatData = chatDoc.data();
-		  const userPreviews = chatData.userPreviews || [];
-
-		  // 2. Шукаємо в масиві userPreviews того користувача, чий ID НЕ збігається з senderId (це і є наш отримувач)
-		  const receiver = userPreviews.find(user => user.id !== senderId);
-
-		  if (!receiver) {
-				console.log("Не вдалося визначити отримувача повідомлення (receiver).");
-				return;
-		  }
-
-		  const receiverId = receiver.id;
-
-		  // 3. Тепер ідемо в колекцію користувачів за токеном отримувача
-		  const userDoc = await admin.firestore().collection("Users").doc(receiverId).get();
-		  
-		  if (!userDoc.exists) {
-				console.log(`Користувача ${receiverId} не знайдено в колекції users.`);
-				return;
-		  }
-
-		  const fcmToken = userDoc.data().fcmToken;
-
-		  if (!fcmToken || fcmToken === "") {
-				console.log(`У користувача ${receiverId} немає активного fcmToken.`);
-				return;
-		  }
-
-		  // 4. Формуємо пуш-пакет для Apple пристроїв
-		  const payload = {
-				token: fcmToken,
-				notification: {
-					 title: senderName,
-					 body: text
-				},
-				data: {
-					 chatID: chatId // Передаємо для вашого майбутнього NavigationManager TODO
-				},
-				apns: {
-					 payload: {
-						  aps: {
-								sound: "default",
-								badge: 1
-						  }
-					 }
-				}
-		  };
-
-		  // 5. Відправка
-		  const response = await admin.messaging().send(payload);
-		  console.log("Пуш успішно відправлено через Cloud Functions! ID:", response);
-
-	 } catch (error) {
-		  console.error("Сталася помилка при обробці пуша:", error);
+	 
+	 const chatData = chatDoc.data();
+	 const userPreviews = chatData.userPreviews || [];
+	 
+	 // 2. Identify sender and receiver from userPreviews
+	 const receiver = userPreviews.find(user => user.id !== senderId);
+	 const sender = userPreviews.find(user => user.id == senderId);
+	 
+	 if (sender) {
+		senderName = sender.nickname || "New Message";
 	 }
+	 
+	 if (!receiver) {
+		console.log("Could not determine the message receiver.");
+		return;
+	 }
+	 
+	 const receiverId = receiver.id;
+	 
+	 // 3. Fetch the receiver's FCM token from Users collection
+	 const userDoc = await admin.firestore().collection("Users").doc(receiverId).get();
+	 
+	 if (!userDoc.exists) {
+		console.log(`User ${receiverId} not found in Users collection.`);
+		return;
+	 }
+	 
+	 const fcmToken = userDoc.data().fcmToken;
+	 
+	 if (!fcmToken || fcmToken === "") {
+		console.log(`User ${receiverId} does not have an active fcmToken.`);
+		return;
+	 }
+	 
+	 // 4. Construct the APNs payload without the badge parameter
+	 const payload = {
+		token: fcmToken,
+		notification: {
+		  title: senderName,
+		  body: text
+		},
+		data: {
+		  chatID: chatId
+		},
+		apns: {
+		  payload: {
+			 aps: {
+				sound: "default"
+			 }
+		  }
+		}
+	 };
+	 
+	 // 5. Send the push notification via Firebase Messaging
+	 const response = await admin.messaging().send(payload);
+	 console.log("Push notification successfully sent! Message ID:", response);
+	 console.log("Push notification successfully sent! chat ID:", chatId);
+	 
+  } catch (error) {
+	 console.error("An error occurred while processing the push notification:", error);
+  }
+});
+
+// -------------------------------------------------------------------------
+// VOIP CALL FUNCTION: Triggers a high-priority VoIP push for CallKit
+// -------------------------------------------------------------------------
+exports.triggerVoIPCall = onCall({ region: "europe-central2" }, async (request) => {
+  if (!request.auth) {
+	 throw new HttpsError("unauthenticated", "Користувач повинен бути авторизований.");
+  }
+  
+  const chatId = request.data.chatId;
+  const receiverId = request.data.receiverId;
+  const callerName = request.data.callerName || "Вхідний виклик";
+  
+  if (!chatId || !receiverId) {
+	 throw new HttpsError("invalid-argument", "Відсутні обов'язкові параметри chatId або receiverId.");
+  }
+  
+  try {
+	 // 1. Fetch the receiver's document from Users collection
+	 const userDoc = await admin.firestore().collection("Users").doc(receiverId).get();
+	 
+	 if (!userDoc.exists) {
+		throw new HttpsError("not-found", "Отримувача не знайдено в базі даних.");
+	 }
+	 
+	 // 2. Extract the unique VoIP token
+	 const voipToken = userDoc.data().voipToken;
+	 if (!voipToken || voipToken === "") {
+		throw new HttpsError("failed-precondition", "У користувача немає активного VoIP токена.");
+	 }
+	 
+	 // 3. Construct the high-priority APNs VoIP notification
+	 const note = new apn.Notification();
+	 note.expiry = 0;
+	 note.priority = 10;
+	 
+	 note.topic = "hiroio.ChatBook.voip";
+	 
+	 note.payload = {
+		chatId: chatId,
+		callerName: callerName
+	 };
+	 
+	 // 4. Send the VoIP push notification via Apple APNs
+	 const result = await apnProvider.send(note, voipToken);
+	 
+	 // 5. Verify delivery results and handle errors
+	 if (result.failed.length > 0) {
+		console.error("APNs delivery failure response:", result.failed[0].response);
+		return { success: false, error: "APNs відхилив токен" };
+	 }
+	 console.log("VoIP push notification successfully sent! Receiver ID:", receiverId);
+	 console.log("VoIP push notification successfully sent! Chat ID:", chatId);
+	 return { success: true };
+  } catch (error) {
+	 console.error("An error occurred while processing the VoIP notification:", error);
+	 throw new HttpsError("internal", error.message);
+  }
 });

@@ -15,6 +15,7 @@ struct EmailForm: View {
         TextField(text: $email) {
           Text("Email")
         }
+		  .keyboardType(.emailAddress)
         .foregroundStyle(.blue.opacity(0.6))
         .padding()
         .frame(maxWidth: .infinity)

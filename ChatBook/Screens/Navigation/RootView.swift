@@ -10,11 +10,15 @@ import SwiftUI
 struct RootView: View {
   @EnvironmentObject var authManager: AuthenticationManager
     var body: some View {
-      if authManager.user == nil{
-        AuthorizationView()
-      }else{
-        MainView()
-      }
+		ZStack{
+		  if authManager.user == nil{
+			 AuthorizationView()
+				.transition(.move(edge: .top))
+		  }else{
+			 MainView()
+		  }
+		}
+		.animation(.easeInOut, value: authManager.user != nil)
     }
 }
 
