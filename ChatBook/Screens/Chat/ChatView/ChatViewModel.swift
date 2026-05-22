@@ -16,7 +16,7 @@ class ChatViewModel: ObservableObject{
 
 //  Helpers
   public let chatManager = ChatManager.shared
-  public let userId = AuthenticationManager.shared.user?.id
+  public var userId: String? { UserManager.shared.currentUserId }
   
   private var cancellables: Set<AnyCancellable> = []
   
@@ -36,6 +36,7 @@ class ChatViewModel: ObservableObject{
       
       await MainActor.run {
         self.currentChat = chat
+		  
 		  if let otherUserId = opposideUser?.id{
 			 getOppositeUser(with: otherUserId)
 		  }

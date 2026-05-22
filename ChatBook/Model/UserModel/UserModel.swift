@@ -6,40 +6,40 @@
 //
 
 import Foundation
-import FirebaseAuth
 
-struct UserModel: Codable{
+struct UserModel: Codable, Identifiable, Equatable {
   let id: String
-  let nickname: String
+  var nickname: String
   let email: String?
-  let photoURL: String?
-  let fcmToken: String
-  let voipToken: String
+  var photoURL: String?
+  var fcmToken: String
+  var voipToken: String
   let isAnnonymous: Bool
-  let isOnline: Bool
+  var isOnline: Bool
   let dateCreated: Date
+  
+  
+  static let preview = UserModel(id: "", nickname: "User", email: "", fcmToken: "", voipToken: "", isAnnonymous: false, isOnline: true, dateCreated: Date())
 }
 
-
-extension UserModel{
-  init(user: User){
-    self.id = user.uid
-    self.nickname = "User#\(user.uid.prefix(3))"
-    self.email = user.email
-    self.photoURL = user.photoURL?.absoluteString
-    self.isAnnonymous = user.isAnonymous
-	 self.fcmToken = ""
-	 self.voipToken = ""
-    self.isOnline = false
-	 self.dateCreated = Date()
+extension UserModel {
+  static func newProfile(id: String, email: String?, isAnonymous: Bool) -> UserModel {
+    UserModel(
+      id: id,
+      nickname: "User#\(id.prefix(3))",
+      email: email,
+      photoURL: nil,
+      fcmToken: "",
+      voipToken: "",
+      isAnnonymous: isAnonymous,
+      isOnline: true,
+      dateCreated: Date()
+    )
   }
 }
 
-
 struct UserPreview: Codable {
-    let id: String
-    let nickname: String
-    let photoURL: String
+  let id: String
+  let nickname: String
+  let photoURL: String
 }
-
-

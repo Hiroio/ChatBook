@@ -13,10 +13,6 @@ struct UserView: View {
   @State private var selectedItem: PhotosPickerItem? = nil
   var body: some View {
     VStack(spacing: 15){
-      Image(systemName: "xmark")
-        .foregroundStyle(.blue)
-        .frame(maxWidth: .infinity,alignment: .trailing)
-      
       if vm.user != nil{
         PhotosPicker(selection: $selectedItem, matching: .images) {
           ZStack{
@@ -70,7 +66,7 @@ struct UserView: View {
         if isActive{
           vm.saveChanges()
         }else{
-          vm.getUser()
+          vm.reloadProfile()
         }
       }label: {
         Text(isActive ? "Submit" : "Reload")
@@ -85,18 +81,12 @@ struct UserView: View {
       }
     }
     .padding(10)
-    .background(
-      RoundedRectangle(cornerRadius: 20)
-        .fill(
-          RadialGradient.background
-        )
-    )
     .padding(.horizontal, 30)
   }
   
   
   private var errorLoading: some View{
-    VStack{
+	 VStack(spacing: 25){
       Image(systemName: "exclamationmark.circle.fill")
         .font(.largeTitle)
         .foregroundStyle(.blue)

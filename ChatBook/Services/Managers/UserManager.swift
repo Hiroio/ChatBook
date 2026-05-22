@@ -6,106 +6,174 @@
 //
 
 import Foundation
+import Combine
+import FirebaseAuth
 import FirebaseFirestore
 import FirebaseSharedSwift
 
-class UserManager {
-  static let shared = UserManager()
-  
-  private init(){}
-  
-  let userDefault = UserDefaultsManager.shared
-  
-  
-  private let userCollection: CollectionReference = Firestore.firestore().collection("Users")
-  
-  func userDocument(userId: String) -> DocumentReference{
-	 userCollection.document(userId)
-  }
-  
-  func createNewUser(user: UserModel) async throws{
-	 var userFS = FSUser(user: user)
-	 userFS.isOnline = true
-	 if !userDefault.fcmToken.isEmpty{
-		userFS.fcmToken = userDefault.fcmToken
-	 }
-	 
-	 try userDocument(userId: user.id).setData(from: userFS, merge: false, encoder: Firestore.Encoder())
-  }
-  
-  func getUsersBySearch(text: String) async -> [FSUser]{
-	 let queryEnd = text + "\u{f8ff}"
-	 
-	 guard let users = try? await userCollection
-		.whereField("nickname", isGreaterThanOrEqualTo: text)
-		.whereField("nickname", isLessThanOrEqualTo: queryEnd)
-		.getDocumentsCustom() as [FSUser] else {
-		return []
-	 }
-	 return users
-  }
-  
-  func getUser() async -> UserModel?{
-	 guard let id = AuthenticationManager.shared.user?.id else {return nil}
-	 print("here user to find: \(id)")
-	 return try? await userDocument(userId: id).getDocument(as: UserModel.self)
-  }
-  
-  func getUser(by id: String) async -> UserModel?{
-	 return try? await userDocument(userId: id).getDocument(as: UserModel.self)
-  }
-  
-  
-  func setFCMToken() async throws {
-	 guard let id = AuthenticationManager.shared.user?.id else {return}
-	 let token = UserDefaultsManager.shared.fcmToken
-	 try await userDocument(userId: id).setData(["fcmToken": token], merge: true)
-  }
-  
-  func setVoIPToken() async throws {
-	 guard let id = AuthenticationManager.shared.user?.id else {return}
-	 let token = UserDefaultsManager.shared.voIpToken
-	 try await userDocument(userId: id).setData(["voipToken": token], merge: true)
-	 
-	 print("VoIP Token set : \(token)")
-  }
-  
-  
-  func initializeUser(online: Bool) async{
-	 guard let id = AuthenticationManager.shared.user?.id else {return}
-	 try? await userDocument(userId: id).setData(["isOnline": online], merge: true)
-  }
-  
+enum UserManagerError: Error {
+  case notAuthenticated
+  case userNotFound
 }
 
+@MainActor
+final class UserManager: ObservableObject {
+  static let shared = UserManager()
 
+  @Published private(set) var currentUser: UserModel?
 
-extension UserManager{
-  func updateProfileInAllChats(id: String, newNickname: String, newPhoto: String) async -> Bool {
-	 let db = Firestore.firestore()
-	 
-	 try? await userDocument(userId: id).setData(["nickname": newNickname], merge: true)
-	 
-	 let snapshots = try? await db.collection("chats")
-		.whereField("users", arrayContains: id)
-		.getDocuments()
-	 
-	 let batch = db.batch()
-	 
-	 snapshots?.documents.forEach { doc in
-		var previews = doc.data()["userPreviews"] as? [[String: Any]] ?? []
-		
-		for i in 0..<previews.count {
-		  if previews[i]["id"] as? String == id {
-			 previews[i]["nickname"] = newNickname
-			 previews[i]["photoURL"] = newPhoto
-		  }
-		}
-		
-		batch.updateData(["userPreviews": previews], forDocument: doc.reference)
-	 }
-	 
-	 try? await batch.commit()
-	 return true
+  private let userDefaults = UserDefaultsManager.shared
+  private let userCollection = Firestore.firestore().collection("Users")
+
+  private init() {}
+
+  var currentUserId: String? {
+    Auth.auth().currentUser?.uid
+  }
+
+  // MARK: - References
+
+  func userDocument(userId: String) -> DocumentReference {
+    userCollection.document(userId)
+  }
+
+  // MARK: - Session (current user)
+
+  func loadCurrentUser() async throws -> UserModel {
+    guard let id = currentUserId else { throw UserManagerError.notAuthenticated }
+
+    let user = try await userDocument(userId: id).getDocument(as: UserModel.self)
+    currentUser = user
+    return user
+  }
+
+  func ensureUserDocument(email: String?, isAnonymous: Bool) async throws -> UserModel {
+    guard let id = currentUserId else { throw UserManagerError.notAuthenticated }
+
+    let document = userDocument(userId: id)
+    let snapshot = try await document.getDocument()
+
+    if snapshot.exists {
+      try await document.setData(sessionFields(), merge: true)
+    } else {
+      var user = UserModel.newProfile(id: id, email: email, isAnonymous: isAnonymous)
+      user.fcmToken = userDefaults.fcmToken
+      user.voipToken = userDefaults.voIpToken
+      try document.setData(from: user, merge: false, encoder: Firestore.Encoder())
+    }
+
+    let user = try await document.getDocument(as: UserModel.self)
+    currentUser = user
+    return user
+  }
+
+  func clearCurrentUser() {
+    currentUser = nil
+  }
+
+  // MARK: - Fetch (by id)
+
+  func fetchUser(id: String) async throws -> UserModel {
+    try await userDocument(userId: id).getDocument(as: UserModel.self)
+  }
+  
+  func fetchUsers() async throws -> [UserModel]{
+	 try await userCollection.getDocumentsCustom()
+  }
+
+  // MARK: - Search
+
+  func searchUsers(nicknamePrefix text: String) async throws -> [UserModel] {
+    let queryEnd = text + "\u{f8ff}"
+
+    return try await userCollection
+      .whereField("nickname", isGreaterThanOrEqualTo: text)
+      .whereField("nickname", isLessThanOrEqualTo: queryEnd)
+      .getDocumentsCustom()
+  }
+
+  // MARK: - Profile updates
+
+  func setOnline(_ isOnline: Bool) async throws {
+    try await setValue(for: .isOnline(isOnline))
+  }
+
+  func setFCMToken() async throws {
+    try await setValue(for: .fcmToken(userDefaults.fcmToken))
+  }
+
+  func setVoIPToken() async throws {
+    try await setValue(for: .voipToken(userDefaults.voIpToken))
+  }
+
+  func setValue(for field: UserFields) async throws {
+    guard let id = currentUserId else { throw UserManagerError.notAuthenticated }
+
+    try await userDocument(userId: id).setData([field.key: field.anyValue], merge: true)
+    currentUser = try await loadCurrentUser()
+  }
+
+  func updateProfileInAllChats(id: String, newNickname: String, newPhoto: String) async throws {
+    let db = Firestore.firestore()
+
+    try await userDocument(userId: id).setData(["nickname": newNickname, "photoURL": newPhoto], merge: true)
+
+    let snapshots = try await db.collection("chats")
+      .whereField("users", arrayContains: id)
+      .getDocuments()
+
+    let batch = db.batch()
+
+    snapshots.documents.forEach { doc in
+      var previews = doc.data()["userPreviews"] as? [[String: Any]] ?? []
+
+      for index in previews.indices where previews[index]["id"] as? String == id {
+        previews[index]["nickname"] = newNickname
+        previews[index]["photoURL"] = newPhoto
+      }
+
+      batch.updateData(["userPreviews": previews], forDocument: doc.reference)
+    }
+
+    try await batch.commit()
+
+    if id == currentUserId {
+      currentUser = try await loadCurrentUser()
+    }
+  }
+
+  // MARK: - Private
+
+  private func sessionFields() -> [String: Any] {
+    [
+      "fcmToken": userDefaults.fcmToken,
+      "voipToken": userDefaults.voIpToken,
+      "isOnline": true,
+    ]
+  }
+}
+
+enum UserFields {
+  case nickname(String)
+  case fcmToken(String)
+  case voipToken(String)
+  case isOnline(Bool)
+
+  var key: String {
+    switch self {
+    case .nickname: return "nickname"
+    case .fcmToken: return "fcmToken"
+    case .voipToken: return "voipToken"
+    case .isOnline: return "isOnline"
+    }
+  }
+
+  var anyValue: Any {
+    switch self {
+    case .nickname(let value): return value
+    case .fcmToken(let value): return value
+    case .voipToken(let value): return value
+    case .isOnline(let value): return value
+    }
   }
 }

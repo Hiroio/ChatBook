@@ -59,7 +59,7 @@ class VoIPService: NSObject, PKPushRegistryDelegate {
 		await MainActor.run {
 		  userDefault.voIpToken = token
 		}
-//		guard token != userDefault.voIpToken else {return}
+		guard token != userDefault.voIpToken else {return}
 		
 		do{
 		  try await UserManager.shared.setVoIPToken()

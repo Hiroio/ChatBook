@@ -101,7 +101,9 @@ struct ChatView: View {
 		  Spacer()
 		  
 		  Button{
-			 callPresented = true
+			 if let otherUser = vm.otherUser{
+				NavigationManager.shared.currentCall = CallModel(chatID: vm.chatId, oppositeUser: otherUser)
+			 }
 		  }label: {
 			 Image(systemName: "phone")
 				.padding()

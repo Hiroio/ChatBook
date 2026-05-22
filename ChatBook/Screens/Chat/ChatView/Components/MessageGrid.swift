@@ -13,7 +13,7 @@ struct MessageGrid: View {
       ScrollView{
         VStack{
           ForEach(messages){message in
-            let userMessage = message.senderId == AuthenticationManager.shared.user?.id
+            let userMessage = message.senderId == UserManager.shared.currentUserId
             HStack(alignment: .bottom){
               Text(message.text)
               Text(message.timestamp.formatted(.dateTime.hour().minute()))

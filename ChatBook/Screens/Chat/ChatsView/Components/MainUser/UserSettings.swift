@@ -9,7 +9,6 @@ import SwiftUI
 
 struct UserSettings: View {
   @State private var activated: Bool = false
-  @Binding  var isPresent: Bool
     var body: some View {
       Button{
         withAnimation(){
@@ -30,7 +29,8 @@ struct UserSettings: View {
             VStack{
               Button("Settings", systemImage: "gearshape"){
                 withAnimation(){
-                  isPresent.toggle()
+						NavigationManager.shared.userProfile.toggle()
+						activated = false
                 }
               }
               .padding(12)
@@ -73,5 +73,5 @@ struct UserSettings: View {
 }
 
 #Preview {
-  UserSettings(isPresent: .constant(false))
+  UserSettings()
 }

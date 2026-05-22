@@ -2,3 +2,4 @@ node_modules/
 *.local
 AuthKey_*.p8
 *keys.json
+*keys*

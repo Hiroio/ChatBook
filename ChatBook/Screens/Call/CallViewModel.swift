@@ -44,12 +44,12 @@ class CallViewModel: ObservableObject {
   
   func sendVoIPRequest(){
 	 Task {
-		let user = await UserManager.shared.getUser()
+		let nickname = await UserManager.shared.currentUser?.nickname ?? ""
 		
 		await CallService.shared.startRemoteCall(
 		  chatId: self.chatId,
 		  receiverId: oppositeUser.id,
-		  callerName: user?.nickname ?? ""
+		  callerName: nickname
 		)
 	 }
   }

@@ -9,20 +9,24 @@ import SwiftUI
 
 struct RootView: View {
   @EnvironmentObject var authManager: AuthenticationManager
-    var body: some View {
-		ZStack{
-		  if authManager.user == nil{
-			 AuthorizationView()
-				.transition(.move(edge: .top))
-		  }else{
-			 MainView()
-		  }
-		}
-		.animation(.easeInOut, value: authManager.user != nil)
+
+  var body: some View {
+    ZStack {
+      switch authManager.sessionState {
+      case .loading:
+        ProgressView("Loading…")
+      case .signedOut:
+        AuthorizationView()
+          .transition(.move(edge: .top))
+      case .signedIn:
+        MainView()
+      }
     }
+    .animation(.easeInOut, value: authManager.sessionState)
+  }
 }
 
 #Preview {
-    RootView()
+  RootView()
     .environmentObject(AuthenticationManager.shared)
 }

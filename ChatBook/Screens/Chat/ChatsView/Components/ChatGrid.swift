@@ -14,9 +14,10 @@ struct ChatGrid: View {
 		Text("You have no chats.")
 		  .font(.footnote.weight(.medium))
 		  .shadow(radius: 1)
+		  .frame(maxHeight: .infinity)
 	 }else{
 		ScrollView{
-		  let userId = AuthenticationManager.shared.user?.id
+		  let userId = UserManager.shared.currentUserId
 		  VStack(spacing: 5){
 			 ForEach(chats){chat in
 				let opponentPreview = chat.userPreviews.first(where: {$0.id != (userId)})

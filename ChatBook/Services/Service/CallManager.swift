@@ -63,7 +63,7 @@ class CallManager: NSObject, AgoraRtcEngineDelegate, ObservableObject {
   func getToken(chatId: String) async throws -> String {
 	 let baseUrl = "https://getagoratoken-d4ddbjwr6a-lm.a.run.app/getAgoraToken"
 	 
-	 guard AuthenticationManager.shared.user?.id != nil else {
+	 guard UserManager.shared.currentUserId != nil else {
 		throw URLError(.userAuthenticationRequired)
 	 }
 	 

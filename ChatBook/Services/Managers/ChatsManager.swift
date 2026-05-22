@@ -19,7 +19,6 @@ class ChatManager {
   
   //  managers
   private var anyCancellables: Set<AnyCancellable> = []
-  private let authManager = AuthenticationManager.shared
   private let userManager = UserManager.shared
   
   //  Listeners
@@ -37,20 +36,19 @@ class ChatManager {
   
   //  MARK: Get chats for mainMenu
   func getUserChats() async -> [ChatModel]{
-    guard let user = authManager.user,
+    guard let userId = userManager.currentUserId,
           let documents: [ChatModel] = try? await chatCollection
-      .whereField("users", arrayContains: user.id)
+      .whereField("users", arrayContains: userId)
       .order(by: "timestamp", descending: true)
       .getDocumentsCustom() else{
       return []
     }
-    print(user.id)
     return documents
   }
   
   //  MARK: Trying to find chat with user if not create
   func findOrCreateChat(with opponentId: String) async -> String {
-    guard let myId = authManager.user?.id else { return "" }
+    guard let myId = userManager.currentUserId else { return "" }
     let id = [myId, opponentId].sorted().joined(separator: "_")
     let chatRef = chatCollection.document(id)
     do {
