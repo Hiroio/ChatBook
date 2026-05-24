@@ -12,9 +12,15 @@ struct CallView: View {
   @StateObject private var viewModel: CallViewModel
   @State private var isPresented: Bool = false
   let dismiss: () -> ()
-  init(oppositeUser: UserModel, chatId: String, dismiss: @escaping () -> ()){
-	 self._viewModel = StateObject(wrappedValue: .init(chatId: chatId, oppositeUser: oppositeUser))
-	 self.dismiss = dismiss
+  init(call: CallModel, dismiss: @escaping () -> Void) {
+    self._viewModel = StateObject(
+      wrappedValue: CallViewModel(
+        chatId: call.chatID,
+        oppositeUser: call.oppositeUser,
+        direction: call.isIncoming ? .incoming : .outgoing
+      )
+    )
+    self.dismiss = dismiss
   }
     var body: some View {
 		VStack(){
@@ -31,24 +37,42 @@ struct CallView: View {
 				  Spacer()
 				  Text(viewModel.oppositeUser.nickname)
 					 .matchedGeometryEffect(id: "name", in: animation)
-				  Text(viewModel.statusMessage)
+				  Text(viewModel.callStatus.title)
+					 .font(.subheadline)
+					 .foregroundStyle(.secondary)
+
+				  if viewModel.showsCallTimer {
+					 Text(viewModel.formattedDuration)
+						.font(.title2.monospacedDigit().weight(.medium))
+						.padding(.top, 4)
+				  }
+
 				  Spacer()
-				  Button{
-					 viewModel.leaveCall()
-					 dismiss()
-				  }label: {
-					 Image(systemName: "phone")
-						.padding()
-						.background(
-						  Circle()
-							 .fill(.red)
-						)
+
+				  HStack(spacing: 40) {
+					 Button {
+						viewModel.toggleMute()
+					 } label: {
+						Image(systemName: viewModel.isMuted ? "mic.slash.fill" : "mic.fill")
+						  .font(.title3)
+						  .foregroundStyle(.white)
+						  .padding()
+						  .background(Circle().fill(viewModel.isMuted ? .orange : .gray))
+					 }
+
+					 Button {
+						viewModel.leaveCall()
+						dismiss()
+					 } label: {
+						Image(systemName: "phone.down.fill")
+						  .font(.title3)
+						  .foregroundStyle(.white)
+						  .padding()
+						  .background(Circle().fill(.red))
+					 }
 				  }
 				}
 				.padding()
-			 }
-			 .onAppear{
-				viewModel.startCall()
 			 }
 		  }
 		}
@@ -75,5 +99,11 @@ struct CallView: View {
 }
 
 #Preview {
-  CallView(oppositeUser: .init(id: "", nickname: "User", email: "", photoURL: "", fcmToken: "", voipToken: "", isAnnonymous: false, isOnline: true, dateCreated: Date()), chatId: ""){}
+  CallView(
+    call: CallModel(
+      chatID: "",
+      oppositeUser: .newProfile(id: "1", email: nil, isAnonymous: false),
+      isIncoming: false
+    )
+  ) {}
 }

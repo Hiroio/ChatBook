@@ -9,6 +9,7 @@ import SwiftUI
 
 struct UserCard: View {
   let user: UserModel
+  let getChat: () -> ()
     var body: some View {
 		HStack(alignment: .top, spacing: 15){
 		  Image(systemName: "person")
@@ -23,7 +24,9 @@ struct UserCard: View {
 		  }
 		  .frame(maxWidth: .infinity, alignment: .leading)
 		  
-		  Button{}label: {
+		  Button{
+			 getChat()
+		  }label: {
 			 Image(systemName: "message")
 				.padding()
 				.background(
@@ -42,5 +45,5 @@ struct UserCard: View {
 }
 
 #Preview {
-  UserCard(user: .preview)
+  UserCard(user: .preview){}
 }

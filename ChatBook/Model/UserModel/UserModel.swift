@@ -36,6 +36,11 @@ extension UserModel {
       dateCreated: Date()
     )
   }
+  
+  var nicknameLower: String {
+		nickname.trimmingCharacters(in: .whitespacesAndNewlines)
+		  .lowercased()
+	 }
 }
 
 struct UserPreview: Codable {

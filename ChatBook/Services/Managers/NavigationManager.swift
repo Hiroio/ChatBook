@@ -8,28 +8,38 @@
 import Foundation
 import Combine
 
-class NavigationManager: ObservableObject{
+@MainActor
+final class NavigationManager: ObservableObject {
   static let shared = NavigationManager()
+
   @Published var mainScreen: MainScreen = .chats
   @Published var userProfile: Bool = false
-  @Published var chatId: String? = nil
-  @Published var currentCall: CallModel? = nil
-  
+  @Published var chatId: ChatNavigation?
+
+  /// When set, MainView presents CallView.
+  @Published var currentCall: CallModel?
+
+  @Published var message: MessageModel?
 }
 
-
-
-
-
-enum MainScreen{
+enum MainScreen {
   case chats, contacts
-  
-  var title: String{
-	 switch self {
-	 case .chats:
-		"Chats"
-	 case .contacts:
-		"Contacts"
-	 }
+
+  var title: String {
+    switch self {
+    case .chats: "Chats"
+    case .contacts: "Contacts"
+    }
+  }
+}
+
+struct ChatNavigation {
+  let chatId: String
+  /// False when the chat document has not been created in Firestore yet.
+  let exist: Bool
+
+  init(chatId: String, exist: Bool = true) {
+    self.chatId = chatId
+    self.exist = exist
   }
 }

@@ -41,9 +41,10 @@ struct SearchView: View {
                   ForEach(vm.usersBySearch){user in
                     Button {
 							 Task{
-								let id = await vm.prepareChat(with: user.id)
-								await MainActor.run{
-								  NavigationManager.shared.chatId = id
+								if let chat = try? await vm.prepareChat(with: user.id){
+								  await MainActor.run{
+									 NavigationManager.shared.chatId = chat
+								  }
 								}
 							 }
                     } label: {

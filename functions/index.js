@@ -152,7 +152,7 @@ exports.sendChatNotification = onDocumentCreated("chats/{chatId}/messages/{messa
 });
 
 // -------------------------------------------------------------------------
-// VOIP CALL FUNCTION: Triggers a high-priority VoIP push for CallKit
+// triggerVoIPCall — sends VoIP push (payload keys match VoIPService.swift)
 // -------------------------------------------------------------------------
 exports.triggerVoIPCall = onCall({ region: "europe-central2" }, async (request) => {
   if (!request.auth) {
@@ -190,7 +190,8 @@ exports.triggerVoIPCall = onCall({ region: "europe-central2" }, async (request) 
 	 
 	 note.payload = {
 		chatId: chatId,
-		callerName: callerName
+		callerName: callerName,
+		callerId: request.auth.uid,
 	 };
 	 
 	 // 4. Send the VoIP push notification via Apple APNs

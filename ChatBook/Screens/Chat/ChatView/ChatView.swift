@@ -12,9 +12,9 @@ struct ChatView: View {
   @StateObject var vm: ChatViewModel
   let chatId: String
   
-  init(id: String){
-    _vm = StateObject(wrappedValue: ChatViewModel(id: id))
-	 self.chatId = id
+  init(chat: ChatNavigation) {
+    chatId = chat.chatId
+    _vm = StateObject(wrappedValue: ChatViewModel(chat: chat))
   }
   @State private var chatText: String = ""
     var body: some View {
@@ -64,7 +64,9 @@ struct ChatView: View {
         }
 		  if callPresented{
 			 if let user = vm.otherUser{
-				CallView(oppositeUser: user, chatId: chatId){callPresented = false}
+				CallView(call: CallModel(chatID: vm.chatId, oppositeUser: user)) {
+				  callPresented = false
+				}
 				  .transition(.move(edge: .bottom))
 			 }
 		  }
@@ -121,6 +123,6 @@ struct ChatView: View {
 
 #Preview {
   NavigationStack{
-    ChatView(id: "123")
+    ChatView(chat: ChatNavigation(chatId: "123"))
   }
 }

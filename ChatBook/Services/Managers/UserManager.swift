@@ -77,8 +77,28 @@ final class UserManager: ObservableObject {
     try await userDocument(userId: id).getDocument(as: UserModel.self)
   }
   
-  func fetchUsers() async throws -> [UserModel]{
-	 try await userCollection.getDocumentsCustom()
+  func fetchUsers() -> some Publisher<[UserModel], Error>{
+	 let subject = PassthroughSubject<[UserModel], Error>()
+	 
+	 let listener = userCollection.addSnapshotListener { snapshot, error in
+		  if let error = error {
+				subject.send(completion: .failure(error))
+				return
+		  }
+		  
+		  let users = snapshot?.documents.compactMap { doc in
+				try? doc.data(as: UserModel.self)
+		  } ?? []
+		  
+		  subject.send(users)
+	 }
+	 
+	 return subject
+		  .handleEvents(receiveCancel: {
+				listener.remove()
+		  })
+		  .eraseToAnyPublisher()
+	 
   }
 
   // MARK: - Search
@@ -129,6 +149,7 @@ final class UserManager: ObservableObject {
 
       for index in previews.indices where previews[index]["id"] as? String == id {
         previews[index]["nickname"] = newNickname
+		  previews[index]["nicknameLowered"] = newNickname.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         previews[index]["photoURL"] = newPhoto
       }
 

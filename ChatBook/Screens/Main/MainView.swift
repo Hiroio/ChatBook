@@ -42,23 +42,27 @@ struct MainView: View {
 		  }
 		  
 //		  MARK: SECONDARY
-		  if let chatId = navigation.chatId{
-			 ChatView(id: chatId)
+		  if let chat = navigation.chatId{
+			 ChatView(chat: chat)
 				.zIndex(1)
-				.transition(.move(edge: .top))
+				.transition(.asymmetric(insertion: .move(edge: .top), removal: .move(edge: .top).combined(with: .opacity)))
 				.allowsHitTesting(navigation.chatId != nil)
 		  }
 		  
 		  if let call = navigation.currentCall {
-			 CallView(
-				oppositeUser: call.oppositeUser,
-				chatId: call.chatID,
-				dismiss: {
-				  navigation.currentCall = nil
-				})
+			 CallView(call: call) {
+				navigation.currentCall = nil
+			 }
 			 .zIndex(2)
-			 .transition(.move(edge: .top))
+			 .transition(.asymmetric(insertion: .move(edge: .top), removal: .move(edge: .top).combined(with: .opacity)))
 			 .allowsHitTesting(navigation.currentCall != nil)
+		  }
+		  
+		  if let message = navigation.message{
+			 MessagePopUp(message: message)
+				.padding(.horizontal, 5)
+				.zIndex(3)
+				.transition(.asymmetric(insertion: .move(edge: .top), removal: .opacity))
 		  }
 		}
 		.sheet(isPresented: $navigation.userProfile, content: {
@@ -67,6 +71,8 @@ struct MainView: View {
 			 .presentationDragIndicator(.visible)
 		})
 		.animation(.bouncy, value: navigation.chatId != nil)
+		.animation(.bouncy, value: navigation.currentCall != nil)
+		.animation(.bouncy, value: navigation.message != nil)
     }
 }
 

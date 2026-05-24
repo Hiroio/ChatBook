@@ -54,8 +54,11 @@ struct UserView: View {
                     }))
         .font(.title2)
         .foregroundStyle(.blue.opacity(0.7))
-        .textFieldStyle(.plain)
-        .fixedSize()
+		  .padding()
+		  .background(
+			 RoundedRectangle(cornerRadius: 15)
+				.stroke(.black, lineWidth: 1)
+		  )
       }else{
         errorLoading
       }

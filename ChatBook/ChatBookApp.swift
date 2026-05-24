@@ -26,7 +26,7 @@ struct ChatBookApp: App {
     }
     .onChange(of: authManager.sessionState) { _, state in
       if state == .signedIn {
-        CallManager.shared.initializeClient()
+        CallManager.shared.warmUpEngine()
       }
     }
     .onChange(of: scenePhase) { _, newValue in
@@ -54,14 +54,14 @@ class AppDelegate: NSObject, UIApplicationDelegate {
   ) -> Bool {
     FirebaseApp.configure()
     print("Configurated")
-
+//  FCM TOKEN
     PushNotificationManager.shared.setupNotifications(for: application)
-    VoIPService.shared.configure()
+//  VOIP TOKEN
+	 VoIPService.shared.configure()
 
     Task { @MainActor in
-      if AuthenticationManager.shared.sessionState == .signedIn,
-         UserManager.shared.currentUser != nil {
-        CallManager.shared.initializeClient()
+      if AuthenticationManager.shared.sessionState == .signedIn {
+        CallManager.shared.warmUpEngine()
       }
     }
     return true

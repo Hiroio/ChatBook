@@ -63,7 +63,7 @@ class PushNotificationManager: NSObject, UNUserNotificationCenterDelegate, Messa
 	 }
   }
 	 
-	 
+//	 ON Open APP
 	 func userNotificationCenter(
 		  _ center: UNUserNotificationCenter,
 		  willPresent notification: UNNotification,
@@ -74,13 +74,22 @@ class PushNotificationManager: NSObject, UNUserNotificationCenterDelegate, Messa
 				  
 				  let currentOpenChatID = NavigationManager.shared.chatId
 				  
-				  if notificationChatID == currentOpenChatID {
+				  if notificationChatID == currentOpenChatID?.chatId {
 						completionHandler([])
 						return
 				  }
+				
+				
+				let title = notification.request.content.title
+				let body = notification.request.content.body
+				
+				let message = MessageModel(id: notificationChatID, text: body, senderId: title, timestamp: Date())
+				DispatchQueue.main.async {
+				  NavigationManager.shared.message = message
+				}
 			 }
 		
-		completionHandler([[.banner]])
+		completionHandler([[]])
 	 }
   
 //  TAP OnNotification
@@ -94,7 +103,7 @@ class PushNotificationManager: NSObject, UNUserNotificationCenterDelegate, Messa
 		if let chatID = userInfo["chatID"] as? String {
 		  print(chatID)
 			 DispatchQueue.main.async {
-				NavigationManager.shared.chatId = chatID
+				NavigationManager.shared.chatId = ChatNavigation(chatId: chatID)
 			 }
 		}
 		

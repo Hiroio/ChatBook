@@ -51,7 +51,7 @@ final class ChatsViewModel: ObservableObject {
     }
   }
 
-  func prepareChat(with opponentId: String) async -> String {
-    await chatManager.findOrCreateChat(with: opponentId)
+  func prepareChat(with opponentId: String) async throws -> ChatNavigation {
+	 return try await chatManager.findOrCreateChatID(with: opponentId)
   }
 }

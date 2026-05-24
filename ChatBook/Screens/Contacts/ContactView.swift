@@ -14,8 +14,16 @@ struct ContactView: View {
 		  RadialGradient.background.ignoresSafeArea()
 		  ScrollView{
 			 LazyVStack(spacing: 5){
-				ForEach(vm.users){user in
-				  UserCard(user: user)
+				ForEach(vm.users){ user in
+				  UserCard(user: user){
+					 Task{
+						if let chat = try? await vm.getChatOrPrepare(with: user.id){
+						  await MainActor.run{
+							 NavigationManager.shared.chatId = chat
+						  }
+						}
+					 }
+				  }
 				}
 			 }
 			 

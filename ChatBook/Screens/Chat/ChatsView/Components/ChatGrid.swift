@@ -21,10 +21,11 @@ struct ChatGrid: View {
 		  VStack(spacing: 5){
 			 ForEach(chats){chat in
 				let opponentPreview = chat.userPreviews.first(where: {$0.id != (userId)})
+				
 				Button{
-				  NavigationManager.shared.chatId = chat.id
+				  NavigationManager.shared.chatId = ChatNavigation(chatId: chat.id)
 				}label: {
-				  UserChat(opponentPreview: opponentPreview, chat: chat)
+				  ChatCard(opponentPreview: opponentPreview, chat: chat)
 				}
 			 }
 		  }
@@ -66,6 +67,7 @@ func UserChat(opponentPreview: UserPreview?, chat: ChatModel) -> some View{
   }
   .frame(maxWidth: .infinity)
   .padding()
+  
   .background(
     RoundedRectangle(cornerRadius: 20)
       .fill(.white)

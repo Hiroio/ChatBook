@@ -28,6 +28,7 @@ struct ChatsView: View {
 		  .padding()
         .frame(maxWidth: .infinity)
       }
+	 
 		.onAppear{
 		  vm.fetchChats()
 		}
