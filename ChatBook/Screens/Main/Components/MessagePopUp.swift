@@ -37,7 +37,7 @@ struct MessagePopUp: View {
 			 }
 			 .onEnded({ drag in
 				if drag.location.y < drag.startLocation.y{
-				  print("dismiised")
+				  print("dismised")
 				  NavigationManager.shared.message = nil
 				}
 			 })

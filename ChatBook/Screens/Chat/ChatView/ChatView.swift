@@ -8,7 +8,8 @@
 import SwiftUI
 
 struct ChatView: View {
-  @State var callPresented: Bool = false
+  @Namespace var animation
+  @State private var repliedMessage: MessageModel? = nil
   @StateObject var vm: ChatViewModel
   let chatId: String
   
@@ -26,54 +27,35 @@ struct ChatView: View {
           
 //          MARK: FOR MESSAGES
           if vm.messages.isEmpty{
-//            Text("No messages yet.")
-//              .font(.subheadline)
-//            Spacer()
+				Text("Chat is empty.\nSend a message to start conversation.")
+				  .multilineTextAlignment(.center)
+				  .frame(maxHeight: .infinity)
+				  .foregroundStyle(.gray)
+				  .font(.footnote)
           }else{
-            MessageGrid(messages: vm.messages)
+				MessageGrid(nameSpace: animation, messages: vm.messages)
           }
           
-          HStack(spacing: 20){
-            TextField(text: $chatText){
-              Text("Write a message...")
-            }
-				.scrollDismissesKeyboard(.interactively)
-            .padding()
-            .foregroundStyle(.black)
-            .background(
-              RoundedRectangle(cornerRadius: 20)
-                .fill(.white)
-                .shadow(color: .blue.opacity(0.5), radius: 5)
-            )
-            Button{
-              vm.sendMessage(text: chatText)
-              chatText = ""
-            }label:{
-              Image(systemName: "paperplane.fill")
-                .font(.headline)
-					 .padding()
-					 .background(
-						Circle()
-						  .fill(.white)
-						  .shadow(radius: 1)
-					 )
-            }
-          }
-          .padding(.horizontal)
+			 ChatTextField()
+				.environmentObject(vm)
 
         }
-		  if callPresented{
-			 if let user = vm.otherUser{
-				CallView(call: CallModel(chatID: vm.chatId, oppositeUser: user)) {
-				  callPresented = false
-				}
-				  .transition(.move(edge: .bottom))
+		  .blur(radius: vm.selectedMessage != nil ? 5 : 0)
+		  
+//		  Selection of message
+		  if let selectedMessage = vm.selectedMessage{
+			 ZStack{
+				Color.black.opacity(0.05).ignoresSafeArea()
+				  .onTapGesture {
+					 vm.selectedMessage = nil
+				  }
+				SelectedMessage(nameSpace: animation, message: selectedMessage)
 			 }
+			 .allowsHitTesting(vm.selectedMessage != nil)
 		  }
-		  
-		  
       }
-		.animation(.easeInOut, value: callPresented)
+		.environmentObject(vm)
+		.animation(.linear, value: vm.selectedMessage != nil)
 		.animation(.easeInOut(duration: 1.0), value: vm.messages.isEmpty)
     }
   
@@ -119,6 +101,8 @@ struct ChatView: View {
 		  .padding(.horizontal)
 	 )
   }
+  
+  
 }
 
 #Preview {

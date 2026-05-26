@@ -8,51 +8,55 @@
 import SwiftUI
 
 struct MessageGrid: View {
+  @EnvironmentObject private var vm: ChatViewModel
+  let nameSpace: Namespace.ID
   let messages: [MessageModel]
+  @State private var hoverTask: Task<Void, Never>?
   var body: some View {
 	 ScrollViewReader{proxy in
 		ScrollView{
-		  VStack{
-			 ForEach(messages.enumerated(), id: \.offset){(index, message) in
+		  LazyVStack(spacing: 10) {
+			 ForEach(messages) { message in
 				let userMessage = message.senderId == UserManager.shared.currentUserId ?? ""
-				HStack(alignment: .bottom, spacing: 6) {
-				  Text(message.text)
-				  
-				  switch message.localStatus {
-				  case .loading:
-					 ProgressView()
-						.controlSize(.mini)
-				  case .failed:
-					 Image(systemName: "exclamationmark.circle.fill")
-						.foregroundStyle(.red)
-						.font(.caption)
-				  case .delivered:
-					 Text(message.timestamp.formatted(.dateTime.hour().minute()))
-						.font(.caption2)
-				  }
-				}
-				.id(index)
-				//				.opacity(message.localStatus == .loading ? 0.7 : 1) ? 0.7 : 1)
-				.padding()
-				.background(
-				  RoundedRectangle(cornerRadius: 20)
-					 .fill(.white)
-					 .shadow(color: .blue.opacity(0.5), radius: 4)
-				)
-				.frame(maxWidth: .infinity, alignment: userMessage ? .trailing : .leading)
-				.onAppear{
-				  withAnimation(.bouncy){
-					 proxy.scrollTo(messages.count - 1)
-				  }
+				if vm.selectedMessage?.id != message.id {
+				  MessageCard(message: message, native: userMessage)
+					 .matchedGeometryEffect(id: message.id, in: nameSpace)
 				}
 			 }
+			 
 		  }
 		  .padding()
+		}
+		.scrollDismissesKeyboard(.interactively)
+		.onAppear {
+		  scrollToBottom(proxy)
+		}
+		.onChange(of: messages.count) { _, _ in
+		  scrollToBottom(proxy)
+		}
+	 }
+  }
+//  var messageForPreview: [MessageModel]{
+//	 if self.messages.isEmpty{
+//		return MessageModel.getForPreview(20, userId: UserManager.shared.currentUserId ?? "")
+//	 }else{
+//		return messages
+//	 }
+//  }
+  
+  private func scrollToBottom(_ proxy: ScrollViewProxy) {
+	 guard let lastMessage = messages.last else { return }
+
+	 DispatchQueue.main.async {
+		withAnimation(.linear) {
+		  proxy.scrollTo(lastMessage.id, anchor: .bottom)
 		}
 	 }
   }
 }
 
 #Preview {
-    MessageGrid(messages: [])
+  @Previewable @Namespace var ns
+  MessageGrid(nameSpace: ns, messages: [])
+	 .environmentObject(ChatViewModel(chat: .init(chatId: "")))
 }

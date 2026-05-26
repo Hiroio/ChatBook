@@ -9,13 +9,24 @@ import Foundation
 import Combine
 import FirebaseFirestore
 
+enum MessageAction{
+  case select(MessageModel)
+  case reply(MessageModel)
+}
+
 @MainActor
 class ChatViewModel: ObservableObject {
   @Published var otherUser: UserModel?
   @Published var currentChat: ChatModel?
+  @Published var chatText: String = ""
   /// Merged list for UI: Firestore messages + local pending/failed rows.
   @Published var messages: [MessageModel] = []
+  @Published var replyMessage: MessageModel? = nil
+  @Published var selectedMessage: MessageModel? = nil
+  @Published var messageForEdit: MessageModel? = nil
   @Published var exist: Bool = false
+  
+  
 
   let chatManager = ChatManager.shared
   var userId: String? { UserManager.shared.currentUserId }
@@ -93,10 +104,11 @@ class ChatViewModel: ObservableObject {
 
   // MARK: - Send
 
-  func sendMessage(text: String) {
-    let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-    guard let userId, !trimmed.isEmpty else { return }
-
+  func sendMessage() {
+    let trimmed = chatText.trimmingCharacters(in: .whitespacesAndNewlines)
+    chatText = ""
+	 guard let userId, !trimmed.isEmpty else { return }
+	 
     Task {
       var outboundMessageId: String?
 
@@ -108,6 +120,7 @@ class ChatViewModel: ObservableObject {
         let pendingMessage = MessageModel(
           id: messageId,
           text: trimmed,
+			 replyId: replyMessage?.id,
           senderId: userId,
           timestamp: Date(),
           localStatus: .loading
@@ -119,8 +132,10 @@ class ChatViewModel: ObservableObject {
           chatId: activeChatId,
           messageId: messageId,
           text: trimmed,
+			 replyId: replyMessage?.id,
           senderId: userId
         )
+		  self.replyMessage = nil
       } catch {
         print("failed to send message: \(error.localizedDescription)")
         if let outboundMessageId {
@@ -222,5 +237,55 @@ extension ChatViewModel {
   private func cancelTimeout(for messageId: String) {
     pendingTimeouts[messageId]?.cancel()
     pendingTimeouts[messageId] = nil
+  }
+  
+}
+
+// MARK: Message actions
+extension ChatViewModel{
+  
+  func replyName(_ id: String) -> String{
+	 if id == userId{
+		return UserManager.shared.currentUser?.nickname ?? ""
+	 }else{
+		return otherUser?.nickname ?? ""
+	 }
+  }
+  
+  func editMessage() {
+    guard let messageForEdit else { return }
+    let text = chatText.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !text.isEmpty else { return }
+
+    let messageId = messageForEdit.id
+    self.messageForEdit = nil
+    self.chatText = ""
+
+    Task {
+      do {
+        try await chatManager.editMessage(chatId: chatId, text: text, messageId: messageId)
+      } catch {
+        print("Error editing message: \(error.localizedDescription)")
+      }
+    }
+  }
+
+  func deleteMessage(_ messageId: String) async {
+    do {
+      try await chatManager.deleteMessage(chatId: chatId, messageId: messageId)
+      if replyMessage?.id == messageId {
+        replyMessage = nil
+      }
+      if messageForEdit?.id == messageId {
+        messageForEdit = nil
+        chatText = ""
+      }
+    } catch {
+      print("Error deleting message: \(error.localizedDescription)")
+    }
+  }
+  
+  var isEditing: Bool{
+	 messageForEdit != nil
   }
 }

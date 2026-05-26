@@ -93,11 +93,12 @@ class ChatManager {
     chatCollection.document(chatId).collection("messages").document()
   }
 
-  /// Writes the message and updates chat metadata.
+  // Writes the message and updates chat metadata.
   func sendMessage(
     chatId: String,
     messageId: String,
     text: String,
+	 replyId: String?,
     senderId: String
   ) async throws {
     let chatDocument = chatCollection.document(chatId)
@@ -106,6 +107,7 @@ class ChatManager {
     let newMessage: [String: Any] = [
       "id": messageId,
       "text": text,
+		"replyId": replyId as Any,
       "senderId": senderId,
       "timestamp": FieldValue.serverTimestamp(),
     ]
@@ -118,6 +120,19 @@ class ChatManager {
     ]
 
     try await chatDocument.setData(updatedFields, merge: true)
+  }
+  
+  func messageDocument(chatId: String, messageId: String) -> DocumentReference {
+    chatCollection.document(chatId).collection("messages").document(messageId)
+  }
+
+  func editMessage(chatId: String, text: String, messageId: String) async throws {
+    try await messageDocument(chatId: chatId, messageId: messageId)
+      .setData(["text": text], merge: true)
+  }
+
+  func deleteMessage(chatId: String, messageId: String) async throws {
+    try await messageDocument(chatId: chatId, messageId: messageId).delete()
   }
 }
 

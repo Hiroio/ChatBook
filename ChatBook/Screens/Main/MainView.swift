@@ -64,6 +64,17 @@ struct MainView: View {
 				.zIndex(3)
 				.transition(.asymmetric(insertion: .move(edge: .top), removal: .opacity))
 		  }
+		  if let popUp = navigation.popUps{
+			 ZStack{
+				Color.black.opacity(0.3).ignoresSafeArea()
+				  .onTapGesture {
+					 navigation.popUps = nil
+				  }
+				SystemPopUpView(type: popUp)
+			 }
+			 .allowsHitTesting(navigation.popUps != nil)
+			 .zIndex(3)
+		  }
 		}
 		.sheet(isPresented: $navigation.userProfile, content: {
 		  UserView()
@@ -73,6 +84,7 @@ struct MainView: View {
 		.animation(.bouncy, value: navigation.chatId != nil)
 		.animation(.bouncy, value: navigation.currentCall != nil)
 		.animation(.bouncy, value: navigation.message != nil)
+		.animation(.bouncy, value: navigation.popUps != nil)
     }
 }
 

@@ -43,15 +43,20 @@ final class ChatsViewModel: ObservableObject {
       }
       .store(in: &cancellables)
   }
-
+//SEARCHING USERS
   private func searchUsers() {
     Task {
       let results = (try? await userManager.searchUsers(nicknamePrefix: searchText)) ?? []
       usersBySearch = results
     }
   }
-
+// CREATION CHAT
   func prepareChat(with opponentId: String) async throws -> ChatNavigation {
 	 return try await chatManager.findOrCreateChatID(with: opponentId)
+  }
+  
+//  DELETE CHAT
+  func deleteChat(){
+	 
   }
 }

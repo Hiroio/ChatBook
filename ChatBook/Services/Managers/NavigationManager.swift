@@ -15,6 +15,8 @@ final class NavigationManager: ObservableObject {
   @Published var mainScreen: MainScreen = .chats
   @Published var userProfile: Bool = false
   @Published var chatId: ChatNavigation?
+  
+  @Published var popUps: SystemPopUp? = nil
 
   /// When set, MainView presents CallView.
   @Published var currentCall: CallModel?
@@ -41,5 +43,32 @@ struct ChatNavigation {
   init(chatId: String, exist: Bool = true) {
     self.chatId = chatId
     self.exist = exist
+  }
+}
+
+
+enum SystemPopUp{
+  case delete(() -> ())
+  
+  
+  var text: String{
+	 switch self {
+	 case .delete:
+		"Are you sure?"
+	 }
+  }
+  
+  var desc: String{
+	 switch self {
+	 case .delete:
+		"This action cannot be undone."
+	 }
+  }
+  
+  var action: () -> Void{
+	 switch self {
+	 case .delete(let action):
+		action
+	 }
   }
 }
