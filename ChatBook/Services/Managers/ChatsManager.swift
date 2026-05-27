@@ -85,6 +85,10 @@ class ChatManager {
   func getCurrentChat(for chatId: String) async throws -> ChatModel {
     try await chatCollection.document(chatId).getDocument(as: ChatModel.self)
   }
+  
+  func deleteChat(_ id: String) async throws{
+	 try await chatCollection.document(id).delete()
+  }
 
   // MARK: - Messages
 

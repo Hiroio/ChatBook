@@ -63,13 +63,21 @@ struct ChatCard: View {
 		.background(
 		  Group{
 			 if dragAmountX < -59{
-				Image(systemName: "trash")
-				  .symbolEffect(.bounce.up.byLayer, options: .nonRepeating)
-				  .foregroundStyle(.red)
-				  .font(.title)
-				  .padding(.horizontal)
-				  .frame(maxWidth: .infinity, alignment: .trailing)
-				  
+				Button{
+				  NavigationManager.shared.popUps = .delete{
+					 Task{
+						try? await ChatManager.shared.deleteChat(chat.id)
+					 }
+				  }
+				}label: {
+				  Image(systemName: "trash")
+					 .symbolEffect(.bounce.up.byLayer, options: .nonRepeating)
+					 .foregroundStyle(.red)
+					 .font(.title)
+					 .padding(.horizontal)
+					 .frame(maxWidth: .infinity, alignment: .trailing)
+					 .contentShape(.rect)
+				}
 			 }
 		  }
 		)
